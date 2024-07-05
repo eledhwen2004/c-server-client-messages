@@ -15,31 +15,28 @@ struct timespec remaining1, request1 = { 0, 1 * 1000000 };
 int iaSocketsFd[ACTIVE_SOCKET_LIMIT] = {0};
 int iActiveSockNum = 0;
 int iEmptySockIndex = 0;
-int iRequestNum = 0;
+//int iRequestNum = 0;
 
 pthread_mutex_t lock;
 
 void *handleConnectionTask(void *args)
 {
-    int iNewSocketFd = (int)args;
+    int iNewSocketFd = (int*)args;
 
     pthread_mutex_lock(&lock);
     iActiveSockNum++;
-    iRequestNum++;
-    iActiveSockNum--;
-    pthread_mutex_unlock(&lock);
+    //iRequestNum++;
 
-    char szSendMessage[100] = {0};
+    char szSendMessage[100] = "Message receieved to serverm!\n";
     char szRecvMessage[1025] = {0};
     int iRecvSize;
-    sprintf(&szSendMessage[0],"Hello, this is message from server to client %d\n",iNewSocketFd);
-    send(iNewSocketFd,&szSendMessage,strlen(szSendMessage),0);
     while(1){
         iRecvSize = recv(iNewSocketFd,&szRecvMessage,1024,0);
+        send(iNewSocketFd,&szSendMessage,strlen(szSendMessage),0);
         if(iRecvSize == 0){
             break;
         }
-        printf("Request Number %d --- Message from client %d : %s\n",iRequestNum,szRecvMessage);
+        printf("Message from client %d : %s",iNewSocketFd,szRecvMessage);
     }
 
     for(int i = 0;i<ACTIVE_SOCKET_LIMIT;i++){
@@ -51,6 +48,8 @@ void *handleConnectionTask(void *args)
 
     shutdown(iNewSocketFd, SHUT_RDWR);
     close(iNewSocketFd);
+    iActiveSockNum--;
+    pthread_mutex_unlock(&lock);
 
     return NULL;
 }

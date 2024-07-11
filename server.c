@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <memory.h>
 
 #define SOCK_PORT 4040
 #define ACTIVE_SOCKET_LIMIT 10
@@ -22,23 +23,42 @@ pthread_mutex_t lock;
 void *handleConnectionTask(void *args)
 {
     int iNewSocketFd = (int*)args;
-
     pthread_mutex_lock(&lock);
     iActiveSockNum++;
     //iRequestNum++;
 
-    char szSendMessage[100] = "Message receieved to serverm!\n";
     char szRecvMessage[1025] = {0};
+    char szBuffer[1025] = {0};
     int iRecvSize;
+    int iBufferIndex = 0;
+    int iRecvIndex = 0;
     while(1){
         iRecvSize = recv(iNewSocketFd,&szRecvMessage,1024,0);
-        send(iNewSocketFd,&szSendMessage,strlen(szSendMessage),0);
         if(iRecvSize == 0){
+            printf("iRecvSize = 0\n");
             break;
         }
-        printf("Message from client %d : %s",iNewSocketFd,szRecvMessage);
+        while(iRecvIndex != iRecvSize){
+            while(szRecvMessage[iRecvIndex] != '-'){
+                if(iRecvIndex == iRecvSize){
+                    break;
+                }
+                szBuffer[iBufferIndex] = szRecvMessage[iRecvIndex];
+                iRecvIndex++;
+                iBufferIndex++;
+            }
+            if(iRecvIndex == iRecvSize){
+                break;
+            }
+            szBuffer[iBufferIndex] = 0;
+            iRecvIndex++;
+            printf("Message from client %d : %s",iNewSocketFd,szBuffer);
+            iBufferIndex = 0;
+            memset(szBuffer,0,1025);
+        }
+        iRecvIndex = 0;
     }
-
+    
     for(int i = 0;i<ACTIVE_SOCKET_LIMIT;i++){
         if(iNewSocketFd == iaSocketsFd[i]){
             iaSocketsFd[i] = 0;
@@ -50,7 +70,7 @@ void *handleConnectionTask(void *args)
     close(iNewSocketFd);
     iActiveSockNum--;
     pthread_mutex_unlock(&lock);
-
+    printf("Socket closed!\n");
     return NULL;
 }
 
@@ -108,7 +128,6 @@ int main()
             perror("Thread couldn't be created!\n");
             exit(EXIT_FAILURE);
         }
-    
     }
 
 

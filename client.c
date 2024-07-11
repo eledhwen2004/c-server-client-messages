@@ -93,7 +93,6 @@ int connectSocket()
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(4040);
-
     if (inet_pton(AF_INET, "127.0.0.1", &address.sin_addr) < 1)
     {
         perror("address invalid or not supported!\n");
@@ -113,26 +112,19 @@ void *sendMessageTask(void *args)
 {
     int iSocketIndex = *((int *)args);
     int socketfd = connectSocket();
-    int iMessageSize = 0;
     char szMessageReceived[100] = {0};
     char szMessageSend[101] = {0};
     for (int i = 0; i < 10000; i++)
     {
-        sprintf(szMessageSend, "Hello, this is message %d from Client %d!\n", i, iSocketIndex);
+        sprintf(szMessageSend, "Hello, this is message %d from Client %d!\n-", i, iSocketIndex);
         int iRet = send(socketfd, szMessageSend, strlen(szMessageSend), 0);
         if (iRet < 0)
         {
             perror("ERR");
             close(socketfd);
-            exit(1);
+  	        exit(1);
         }
-        printf("Message succesfully sent from client!\n");
-        iMessageSize = recv(socketfd, &szMessageReceived[0], 100, 0);
-        if(iMessageSize == 0){
-            printf("Approve Message didin't come!\n");
-            break;
-        }
-        printf("Approve Message : %s\n", szMessageReceived);
+        printf("Message succesfully sent to server from client %d!\n",socketfd);
     }
 
     close(socketfd);

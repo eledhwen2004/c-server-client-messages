@@ -48,10 +48,10 @@ void *sendMessageTask(void *args)
     char szMessageSend[101] = {0};
     int iMsgLen;
     for (int i = 0; i < 10000; i++)
-    {
-        sprintf((&szMessageSend[0])+4, "Hello, this is message %d from Client %d!\n", i, iSocketIndex);
-        iMsgLen = strlen(szMessageSend)-4;
-        memcpy(szMessageSend,()&iMsgLen,4);
+    {  
+        sprintf(szMessageSend + 4, "Hello, this is message %d from Client %d!", i,iSocketIndex);
+        iMsgLen = strlen(szMessageSend+4);
+        memcpy(szMessageSend,&iMsgLen,4);
         int iRet = send(socketfd, szMessageSend, strlen(szMessageSend), 0);
         if (iRet < 0)
         {

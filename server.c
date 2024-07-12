@@ -22,7 +22,7 @@ pthread_mutex_t lock;
 
 void *handleConnectionTask(void *args)
 {
-    int iNewSocketFd = (int)args;
+    int iNewSocketFd = *((int *)args);
     pthread_mutex_lock(&lock);
     iActiveSockNum++;
     // iRequestNum++;
@@ -38,7 +38,6 @@ void *handleConnectionTask(void *args)
     while (1)
     {
         iRecvSize = recv(iNewSocketFd, &szRecvMessage, 1024,0);
-        printf("%d\n",iRecvSize);
         if (iRecvSize == 0)
         {
             printf("iRecvSize = 0\n");
@@ -77,7 +76,7 @@ void *handleConnectionTask(void *args)
                 break;
             }
             szBuffer[iBufferIndex] = 0;
-            printf("Message from client %d : %s", iNewSocketFd, szBuffer);
+            printf("Message from client %d : %s\n", iNewSocketFd, szBuffer);
             iMessageLengthIndex = 0;
             iMessageReaded = 0;
             iBufferIndex = 0;
@@ -164,8 +163,7 @@ int main()
             perror("Connection couldn't be accepted!\n");
             exit(EXIT_FAILURE);
         }
-        long l = (long)iaSocketsFd[iEmptySockIndex];
-        if ((pthread_create(&tempTask, NULL, handleConnectionTask, (void *)l)) != 0)
+        if ((pthread_create(&tempTask, NULL, handleConnectionTask, (void *)&iaSocketsFd[iEmptySockIndex])) != 0)
         {
             perror("Thread couldn't be created!\n");
             exit(EXIT_FAILURE);

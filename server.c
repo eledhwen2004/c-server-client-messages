@@ -10,8 +10,10 @@
 
 #define SOCK_PORT 4040
 #define ACTIVE_SOCKET_LIMIT 10
+#define SOCK_HEADER_SIZE 4
 
 struct timespec remaining1, request1 = {0, 1 * 1000000};
+struct timespec remaining2, request2 = {0, 1 * 100000};
 
 int iaSocketsFd[ACTIVE_SOCKET_LIMIT] = {0};
 int iActiveSockNum = 0;
@@ -27,64 +29,46 @@ void *handleConnectionTask(void *args)
     iActiveSockNum++;
     // iRequestNum++;
 
-    char szRecvMessage[1025] = {0};
-    char szBuffer[1025] = {0};
-    int iRecvSize;
-    int iBufferIndex = 0;
-    int iRecvIndex = 0;
-    int iMessageLengthIndex = 0;
-    int iMessageLength = 0;
-    int iMessageReaded = 0;
-    while (1)
-    {
-        iRecvSize = recv(iNewSocketFd, &szRecvMessage, 1024,0);
-        if (iRecvSize == 0)
-        {
-            printf("iRecvSize = 0\n");
+    char szMessage[1024] = {0};
+    unsigned int uiMessageSize = 0;
+    int iReadedByte = 0;
+    int iReadedSizeMessage = 0;
+    int iReadedMessageSize = 0;
+
+    while(1){
+        while(iReadedSizeMessage != 4){
+            nanosleep(&request2, &remaining2);
+            iReadedByte = recv(iNewSocketFd,(&uiMessageSize)+iReadedSizeMessage,(SOCK_HEADER_SIZE-iReadedSizeMessage),0);
+            iReadedSizeMessage += iReadedByte;
+            if(iReadedByte == 0){
+                break;
+            }
+        }
+        if(iReadedByte == 0){
             break;
         }
-        while (iRecvIndex != iRecvSize)
-        {
-            while (iMessageLengthIndex != 4)
-            {
-                iMessageLength = iMessageLength << 4;
-                iMessageLength = szRecvMessage[iRecvIndex];
-                iRecvIndex++;
-                iMessageLengthIndex++;
-                if (iRecvIndex == iRecvSize)
-                {
-                    break;
-                }
-            }
-            if (iRecvIndex == iRecvSize)
-            {
+        printf("Message Size : %u --- ",uiMessageSize);
+        while(iReadedMessageSize != uiMessageSize){
+            nanosleep(&request2, &remaining2);
+            iReadedByte = recv(iNewSocketFd,szMessage+iReadedMessageSize,uiMessageSize-iReadedMessageSize,0);
+            iReadedMessageSize+=iReadedByte;
+            if(iReadedByte == 0){
                 break;
             }
-            while (iMessageReaded != iMessageLength)
-            {
-                if (iRecvIndex == iRecvSize)
-                {
-                    break;
-                }
-                szBuffer[iBufferIndex] = szRecvMessage[iRecvIndex];
-                iRecvIndex++;
-                iBufferIndex++,
-                iMessageReaded++;
-            }
-            if (iRecvIndex == iRecvSize)
-            {
-                break;
-            }
-            szBuffer[iBufferIndex] = 0;
-            printf("Message from client %d : %s\n", iNewSocketFd, szBuffer);
-            iMessageLengthIndex = 0;
-            iMessageReaded = 0;
-            iBufferIndex = 0;
-            iMessageLength = 0;
-            memset(szBuffer, 0, 1025);
         }
-        iRecvIndex = 0;
+        if(iReadedByte == 0){
+            break;
+        }
+        printf("Message : %s\n",szMessage);
+        memset(szMessage,1024,0);
+        iReadedByte = 0;
+        iReadedSizeMessage = 0;
+        iReadedMessageSize = 0;
+        uiMessageSize = 0;
+        iReadedByte = 0;
     }
+
+
 
     for (int i = 0; i < ACTIVE_SOCKET_LIMIT; i++)
     {

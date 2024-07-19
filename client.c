@@ -42,17 +42,20 @@ int connectSocket()
 
 void *sendMessageTask(void *args)
 {
-    int iSocketIndex = *((int *)args);
+    int iSocketIndex = *((int*)args);
     int socketfd = connectSocket();
-    char szMessageReceived[100] = {0};
     char szMessageSend[101] = {0};
     int iMsgLen;
     for (int i = 0; i < 10000; i++)
     {  
-        sprintf(szMessageSend + 4, "Hello, this is message %d from Client %d!", i,iSocketIndex);
+        sprintf(szMessageSend + 4, "Hello, this is message %d from Client %d!", i,socketfd);
         iMsgLen = strlen(szMessageSend+4);
         memcpy(szMessageSend,&iMsgLen,4);
-        int iRet = send(socketfd, szMessageSend, strlen(szMessageSend), 0);
+        printf("Message Length : %d --- ",iMsgLen),
+        memcpy(&iMsgLen,szMessageSend,4);
+        printf("Message Length : %d \n",iMsgLen);
+        printf("Message : %s",szMessageSend+4);
+        int iRet = send(socketfd, szMessageSend, strlen(szMessageSend+4)+4, 0);
         if (iRet < 0)
         {
             perror("ERR");

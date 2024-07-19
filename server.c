@@ -37,7 +37,6 @@ void *handleConnectionTask(void *args)
 
     while(1){
         while(iReadedSizeMessage != 4){
-            nanosleep(&request2, &remaining2);
             iReadedByte = recv(iNewSocketFd,(&uiMessageSize)+iReadedSizeMessage,(SOCK_HEADER_SIZE-iReadedSizeMessage),0);
             iReadedSizeMessage += iReadedByte;
             if(iReadedByte == 0){
@@ -49,9 +48,9 @@ void *handleConnectionTask(void *args)
         }
         printf("Message Size : %u --- ",uiMessageSize);
         while(iReadedMessageSize != uiMessageSize){
-            nanosleep(&request2, &remaining2);
             iReadedByte = recv(iNewSocketFd,szMessage+iReadedMessageSize,uiMessageSize-iReadedMessageSize,0);
             iReadedMessageSize+=iReadedByte;
+            szMessage[iReadedMessageSize] = 0;
             if(iReadedByte == 0){
                 break;
             }
@@ -60,7 +59,6 @@ void *handleConnectionTask(void *args)
             break;
         }
         printf("Message : %s\n",szMessage);
-        memset(szMessage,1024,0);
         iReadedByte = 0;
         iReadedSizeMessage = 0;
         iReadedMessageSize = 0;

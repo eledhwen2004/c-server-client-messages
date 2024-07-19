@@ -1,1 +1,7 @@
 *.vscode
+
+# executable binaries
+server
+client
+
+
